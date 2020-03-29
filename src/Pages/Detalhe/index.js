@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Image, Text, TouchableOpacity, Linking } from 'react-native';
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as MailComposer from 'expo-mail-composer';
 
 import logoImg from '../../assets/logo.png';
@@ -10,7 +10,10 @@ import styles from './styles';
 
 export default function Detalhe() {
   const navigation = useNavigation();
-  const message = 'VAI SEGURANDO MANO';
+  const route = useRoute();
+
+  const caso = route.params.caso;
+  const message = `Olá ${caso.nome}, estou entrando em contato pois gostaria de ajudar no caso ${caso.titulo} com o valor de ${Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(caso.valor)}`;
 
   function navigateBack() {
     navigation.navigate('Casos');
@@ -18,14 +21,14 @@ export default function Detalhe() {
 
   function sendMail() {
     MailComposer.composeAsync({
-      subject: 'Herói do caso: Cadelinha atropelada',
-      recipients: ['weslei.luiz71@gmail.com'],
+      subject: `Herói do caso: ${caso.titulo}`,
+      recipients: [caso.email],
       body: message
     })
   }
 
   function sendWhatsapp() {
-    Linking.openURL(`whatsapp://send?phone=5512981553834&text=${message}`);
+    Linking.openURL(`whatsapp://send?phone=55${caso.whatsapp}&text=${message}`);
   }
 
   return (
@@ -42,14 +45,20 @@ export default function Detalhe() {
 
       <View style={styles.caso}>
         <Text style={[styles.casoProperty, { marginTop: 0 }]}>ONG:</Text>
-        <Text style={styles.casoValue}>Apad</Text>
+        <Text style={styles.casoValue}>{caso.nome} de {caso.cidade}/{caso.uf}</Text>
 
         <Text style={styles.casoProperty}>Caso:</Text>
-        <Text style={styles.casoValue}>Cadelinha lasarenta</Text>
+        <Text style={styles.casoValue}>{caso.titulo}</Text>
 
         <Text style={styles.casoProperty}>Valor:</Text>
-        <Text style={styles.casoValue}>R$ 500,0</Text>
-
+        <Text style={styles.casoValue}>{
+          Intl.NumberFormat('pt-BR',
+            {
+              style: 'currency',
+              currency: 'BRL'
+            })
+            .format(caso.valor)}
+        </Text>
       </View>
 
       <View style={styles.contactBox}>

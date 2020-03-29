@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, FlatList, Text, Image, TouchableOpacity } from 'react-native';
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
@@ -6,19 +6,36 @@ import { useNavigation } from '@react-navigation/native';
 import logoImg from '../../assets/logo.png';
 import styles from './styles';
 
+import api from '../../services/api'
+
 export default function Caso() {
   const navigation = useNavigation();
+  const [casos, setCasos] = useState([]);
+  const [total, setTotal] = useState(0);
 
-  function navigateToDetalhe() {
-    navigation.navigate('Detalhes');
+  function navigateToDetalhe(caso) {
+    navigation.navigate('Detalhes', { caso });
   }
+
+  async function loadCasos() {
+    const response = await api.get('casos');
+    setCasos(response.data);
+    const total = response.headers['x-total-count'];
+
+    if (total > 0)
+      setTotal(total);
+  }
+
+  useEffect(() => {
+    loadCasos();
+  }, [])
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Image source={logoImg} />
         <Text>
-          Total de <Text style={styles.headerTextBold}>0 casos</Text>.
+          Total de <Text style={styles.headerTextBold}>{total} casos</Text>.
         </Text>
       </View>
 
@@ -26,24 +43,31 @@ export default function Caso() {
       <Text style={styles.title}>Escolha um dos casos!</Text>
 
       <FlatList
-        data={[1, 2, 3]}
-        keyExtractor={caso => String(caso)}
+        data={casos}
+        keyExtractor={caso => String(caso.id)}
         showsVerticalScrollIndicator={false}
         style={styles.casos}
-        renderItem={() => (
+        renderItem={({ item: caso }) => (
           <View style={styles.caso}>
             <Text style={styles.casoProperty}>ONG:</Text>
-            <Text style={styles.casoValue}>Apad</Text>
+            <Text style={styles.casoValue}>{caso.nome}</Text>
 
             <Text style={styles.casoProperty}>Caso:</Text>
-            <Text style={styles.casoValue}>Cadelinha lasarenta</Text>
+            <Text style={styles.casoValue}>{caso.titulo}</Text>
 
             <Text style={styles.casoProperty}>Valor:</Text>
-            <Text style={styles.casoValue}>R$ 500,0</Text>
+            <Text style={styles.casoValue}>{
+              Intl.NumberFormat('pt-BR',
+                {
+                  style: 'currency',
+                  currency: 'BRL'
+                })
+                .format(caso.valor)}
+            </Text>
 
             <TouchableOpacity
               style={styles.detailsButton}
-              onPress={navigateToDetalhe}>
+              onPress={() => navigateToDetalhe(caso)}>
               <Text style={styles.detailsButtonText}>
                 Ver mais detalhes
             </Text>
