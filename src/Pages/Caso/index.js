@@ -12,18 +12,32 @@ export default function Caso() {
   const navigation = useNavigation();
   const [casos, setCasos] = useState([]);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   function navigateToDetalhe(caso) {
     navigation.navigate('Detalhes', { caso });
   }
 
   async function loadCasos() {
-    const response = await api.get('casos');
-    setCasos(response.data);
-    const total = response.headers['x-total-count'];
 
-    if (total > 0)
-      setTotal(total);
+    if (loading)
+      return;
+
+    console.log(casos.length)
+    if (total > 0 && casos.length === total)
+      return;
+
+    setLoading(true);
+    console.log(page);
+    const response = await api.get('casos', {
+      params: { page }
+    });
+
+    setCasos([...casos, ...response.data]);
+    setTotal(response.headers['x-total-count']);
+    setPage(page + 1);
+    setLoading(false);
   }
 
   useEffect(() => {
@@ -46,6 +60,8 @@ export default function Caso() {
         data={casos}
         keyExtractor={caso => String(caso.id)}
         showsVerticalScrollIndicator={false}
+        onEndReached={loadCasos}
+        onEndReachedThreshold={0.2}
         style={styles.casos}
         renderItem={({ item: caso }) => (
           <View style={styles.caso}>
